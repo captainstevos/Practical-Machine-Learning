@@ -35,6 +35,12 @@ We can now perform Cross Validation with the Random Forest technique. At the end
 ```{r,echo=TRUE}
 set.seed(0224)
 ForestModel <- train(trainingx$classe~., method="rf", data=trainingx,trControl=trainControl(method="cv",3))
+```
+
+We can estimate that the out of sample error is slightly higher than the 0% in the sample error rate. It is most likely between 0% and 1%. 
+```{r,echo=TRUE}
+set.seed(0224)
+ForestModel <- train(trainingx$classe~., method="rf", data=trainingx,trControl=trainControl(method="cv",3))
 ModelPrediction <- predict(ForestModel, testingx)
 confusionMatrix(testingx$classe, ModelPrediction)
 ```
