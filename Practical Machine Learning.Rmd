@@ -1,0 +1,55 @@
+---
+title: "Human Activity Recognition"
+author: "Steve Kuo"
+output: html_document
+---
+#Background
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. This project analyzes the data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har 
+
+##Data Processing
+The first step in my analysis was to load the appropriate libraries and data into R. 
+```{r,echo=TRUE}
+library(caret)
+library(randomForest)
+setwd("C:/Users/558966/Documents/Coursera")
+training <- read.csv("pml-training.csv")
+testing<- read.csv("pml-testing.csv")
+```
+##Cleaning the Data
+The first few columns in the training set aren't needed for analysis so we can remove them. Additionally, there are rows with no data or "NA" values and can also be removed. 
+```{r,echo=TRUE}
+training.clean <- training[,-(1:7)]
+training.clean <- training.clean[colSums(is.na(training.clean)) ==0]
+training.clean <- training.clean[colSums(training.clean == "") ==0]
+testing.clean <- testing[,-(1:7)]
+```
+##Model Building
+Before building the model, we need to first slice the data into Training and Testing sets at (60%/40%, respectively). 
+```{r,echo=TRUE}
+inTrain <- createDataPartition(y=training.clean$classe, p=0.6, list=FALSE)
+trainingx <- training.clean[inTrain,]
+testingx <- training.clean[-inTrain,]
+```
+We can now perform Cross Validation with the Random Forest technique. At the end, we use the confusion matrix to detail the accuracy and error rate. 
+
+```{r,echo=TRUE}
+set.seed(0224)
+ForestModel <- train(trainingx$classe~., method="rf", data=trainingx,trControl=trainControl(method="cv",3))
+ModelPrediction <- predict(ForestModel, testingx)
+confusionMatrix(testingx$classe, ModelPrediction)
+```
+The accuracy of the model is 99% with a 95% Confidence interval of .988, .993. Therefore, our random forest model with a 3 fold method is an accurate model in predicting outcomes. 
+
+##Submission
+```{r,echo=TRUE}
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+
+testpred <- predict(ForestModel, testing.clean)
+pml_write_files(testpred)
+```
